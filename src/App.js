@@ -11,15 +11,16 @@ class App extends Component {
     this.remoteVideo = React.createRef()
 
     this.socket = null
+    this.candidates = []
   }
 
   componentDidMount() {
     //const pc_config = null;
 
     this.socket = io(
-      '/https://fa832281.ngrok.io/webrtcPeer',
+      'https://fa832281.ngrok.io/webrtcPeer',
       {
-        path: '/io/webrtc', query: {}
+        path: '/webrtc', query: {}
       }
     )
 
@@ -33,7 +34,9 @@ class App extends Component {
     })
 
     this.socket.on('candidate', candidate => {
+      //this.candidates = [...this.candidates, candidate]
       this.pc.addIceCandidate(new RTCIceCandidate(candidate)) // TODO: Check if the right candidate?
+
     })
 
     const pc_config = //null
@@ -95,7 +98,16 @@ class App extends Component {
       this.sendToPeer('offerOrAnswer', sdp) // TODO: Add target peer
     })
   }
-
+  setRemoteDescription = () => {
+    const desc = JSON.parse(this.textref.value)
+    this.pc.setRemoteDescription(new RTCSessionDescription(desc))
+  }
+  addCandidate = () => {
+    this.candidates.forEach(candidate => {
+      console.log('candidate:', JSON.stringify(candidate))
+      this.pc.addIceCandidate(new RTCIceCandidate(candidate)) // TODO: Check if the right candidate?
+    })
+  }
   sendToPeer = (messageType, payload) => {
     this.socket.emit(messageType, {
       socketID: this.socket.id,
@@ -116,7 +128,7 @@ class App extends Component {
           ref={this.remoteVideo}
           autoPlay>
         </video>
-        <button onClick={this.createOffer}>Call</button>
+        <button onClick={this.createOffer}>Offer</button>
         <button onClick={this.createAnswer}>Answer</button>
         <br />
         <textarea ref={ref => { this.textref = ref }} />
